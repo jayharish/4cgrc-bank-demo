@@ -357,7 +357,7 @@ export default function Layout() {
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="page-fade-in">
+          <div key={location.pathname} className="page-fade-in">
             <Outlet />
           </div>
         </main>
