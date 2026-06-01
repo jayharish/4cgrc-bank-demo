@@ -1,27 +1,18 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Cpu, AlertTriangle, Clock, WifiOff, MoreHorizontal, Download, Maximize2 } from 'lucide-react';
+import { Cpu, AlertTriangle, WifiOff, MoreHorizontal, Download, Maximize2, Loader2 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import KPICard from '../components/KPICard';
 import FilterBar from '../components/FilterBar';
 import StatusBadge from '../components/StatusBadge';
 import ScoreGauge from '../components/ScoreGauge';
-import { ATMS } from '../data/atms';
+import { supabase } from '../lib/supabase';
+import { ATMS as ATMS_MOCK } from '../data/atms';
 
 const EMIRATE_OPTIONS = ['Abu Dhabi', 'Dubai', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah'];
-
-const STATUS_COLOR = { online: '#10B981', offline: '#EF4444' };
-
-const ATM_BY_EMIRATE = [
-  { emirate: 'Abu Dhabi', count: 6, score: 79 },
-  { emirate: 'Dubai', count: 5, score: 74 },
-  { emirate: 'Sharjah', count: 1, score: 75 },
-  { emirate: 'Ajman', count: 1, score: 44 },
-  { emirate: 'Ras Al Khaimah', count: 1, score: 79 },
-  { emirate: 'Fujairah', count: 1, score: 83 },
-];
+const STATUS_COLOR = { Online: '#10B981', Offline: '#EF4444', online: '#10B981', offline: '#EF4444' };
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -72,6 +63,38 @@ function ChartCard({ title, subtitle, children }) {
 export default function ATMNetwork() {
   const [filters, setFilters] = useState({ emirate: '', status: '', model: '' });
   const [applied, setApplied] = useState({});
+  const [ATMS, setAtms] = useState(ATMS_MOCK);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from('atms').select('*').order('id').then(({ data, error }) => {
+      if (!error && data?.length > 0) {
+        setAtms(data.map(a => ({
+          ...a,
+          location: a.location || a.name,
+          connectivity: a.status,
+          lastCash: a.last_serviced,
+          lastInspection: a.last_serviced,
+          score: a.uptime ? Math.round(a.uptime) : 80,
+        })));
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  const ATM_BY_EMIRATE = useMemo(() => {
+    const map = {};
+    ATMS.forEach(a => {
+      if (!map[a.emirate]) map[a.emirate] = { emirate: a.emirate, count: 0, scores: [] };
+      map[a.emirate].count++;
+      if (a.score) map[a.emirate].scores.push(a.score);
+    });
+    return Object.values(map).map(e => ({
+      emirate: e.emirate,
+      count: e.count,
+      score: e.scores.length > 0 ? Math.round(e.scores.reduce((a, s) => a + s, 0) / e.scores.length) : 0,
+    }));
+  }, [ATMS]);
 
   const handleReset = () => { setFilters({ emirate: '', status: '', model: '' }); setApplied({}); };
   const handleApply = () => setApplied({ ...filters });
@@ -79,13 +102,13 @@ export default function ATMNetwork() {
   const filtered = useMemo(() => {
     return ATMS.filter(a => {
       if (applied.emirate && a.emirate !== applied.emirate) return false;
-      if (applied.status && a.connectivity.toLowerCase() !== applied.status.toLowerCase()) return false;
+      if (applied.status && (a.connectivity || a.status)?.toLowerCase() !== applied.status.toLowerCase()) return false;
       return true;
     });
-  }, [applied]);
+  }, [applied, ATMS]);
 
-  const offlineATMs = filtered.filter(a => a.connectivity === 'Offline');
-  const avgScore = Math.round(filtered.reduce((s, a) => s + a.score, 0) / filtered.length);
+  const offlineATMs = filtered.filter(a => (a.connectivity || a.status)?.toLowerCase() === 'offline');
+  const avgScore = filtered.length > 0 ? Math.round(filtered.reduce((s, a) => s + (a.score || 80), 0) / filtered.length) : 0;
 
   const FILTER_DEFS = [
     { key: 'emirate', label: 'Emirate', type: 'select', options: EMIRATE_OPTIONS },
@@ -94,9 +117,12 @@ export default function ATMNetwork() {
 
   return (
     <motion.div className="p-6 space-y-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">ATM Network</h2>
-        <p className="text-sm text-slate-400 mt-0.5">Locations / ATMs — UAE ATM Coverage & Status</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-1)' }}>ATM Network</h2>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--text-4)' }}>Locations / ATMs — UAE ATM Coverage & Status</p>
+        </div>
+        {loading && <Loader2 size={18} className="animate-spin" style={{ color: 'var(--accent)' }} />}
       </div>
 
       <FilterBar filters={FILTER_DEFS} values={filters} onChange={(k, v) => setFilters(f => ({ ...f, [k]: v }))} onReset={handleReset} onApply={handleApply} />
@@ -113,7 +139,7 @@ export default function ATMNetwork() {
           <WifiOff size={18} className="text-red-500 shrink-0" />
           <div>
             <p className="text-sm font-semibold text-red-700">ATMs Currently Offline</p>
-            <p className="text-xs text-red-600 mt-0.5">{offlineATMs.map(a => `${a.id} (${a.location})`).join(' · ')}</p>
+            <p className="text-xs text-red-600 mt-0.5">{offlineATMs.map(a => `${a.id} (${a.location || a.name})`).join(' · ')}</p>
           </div>
         </div>
       )}
@@ -136,25 +162,28 @@ export default function ATMNetwork() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {filtered.map(atm => (
+            {filtered.map(atm => {
+              const atmStatus = (atm.connectivity || atm.status || '').toLowerCase();
+              const markerColor = atmStatus === 'offline' ? '#EF4444' : '#10B981';
+              return (
               <CircleMarker
                 key={atm.id}
                 center={[atm.lat, atm.lng]}
-                radius={atm.connectivity === 'Offline' ? 11 : 8}
+                radius={atmStatus === 'offline' ? 11 : 8}
                 pathOptions={{
-                  color: STATUS_COLOR[atm.status],
-                  fillColor: STATUS_COLOR[atm.status],
+                  color: markerColor,
+                  fillColor: markerColor,
                   fillOpacity: 0.9,
-                  weight: atm.connectivity === 'Offline' ? 3 : 2,
+                  weight: atmStatus === 'offline' ? 3 : 2,
                 }}
               >
                 <Popup>
                   <div className="text-xs min-w-[200px]">
                     <div className="flex items-center justify-between mb-1">
                       <p className="font-bold text-slate-800 text-sm">{atm.id}</p>
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${atm.connectivity === 'Online' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{atm.connectivity}</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${atmStatus === 'online' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{atm.connectivity || atm.status}</span>
                     </div>
-                    <p className="text-slate-600 font-medium mb-0.5">{atm.location}</p>
+                    <p className="text-slate-600 font-medium mb-0.5">{atm.location || atm.name}</p>
                     <p className="text-slate-400 mb-2">{atm.model}</p>
                     <div className="grid grid-cols-2 gap-1.5">
                       <div className="bg-slate-50 rounded p-1.5">
@@ -173,7 +202,8 @@ export default function ATMNetwork() {
                   </div>
                 </Popup>
               </CircleMarker>
-            ))}
+              );
+            })}
           </MapContainer>
         </div>
 
@@ -212,30 +242,35 @@ export default function ATMNetwork() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.map(atm => (
-                <tr key={atm.id} className={`hover:bg-slate-50 transition-colors ${atm.connectivity === 'Offline' ? 'bg-red-50' : ''}`}>
+              {filtered.map(atm => {
+                const atmConn = atm.connectivity || atm.status || 'Online';
+                const atmScore = atm.score || 80;
+                const isOffline = atmConn.toLowerCase() === 'offline';
+                return (
+                <tr key={atm.id} className={`hover:bg-slate-50 transition-colors ${isOffline ? 'bg-red-50' : ''}`}>
                   <td className="px-4 py-3 text-xs font-mono font-medium text-slate-600">{atm.id}</td>
-                  <td className="px-4 py-3 text-xs font-medium text-slate-700 max-w-[200px] truncate">{atm.location}</td>
+                  <td className="px-4 py-3 text-xs font-medium text-slate-700 max-w-[200px] truncate">{atm.location || atm.name}</td>
                   <td className="px-4 py-3 text-xs text-slate-500">{atm.emirate}</td>
                   <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{atm.model}</td>
-                  <td className="px-4 py-3 text-xs text-slate-500">{atm.lastCash}</td>
-                  <td className="px-4 py-3 text-xs text-slate-500">{atm.lastInspection}</td>
+                  <td className="px-4 py-3 text-xs text-slate-500">{atm.lastCash || atm.last_serviced || '—'}</td>
+                  <td className="px-4 py-3 text-xs text-slate-500">{atm.lastInspection || atm.last_serviced || '—'}</td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${atm.incidents > 6 ? 'bg-red-50 text-red-600' : atm.incidents > 3 ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}>{atm.incidents}</span>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${(atm.incidents||0) > 6 ? 'bg-red-50 text-red-600' : (atm.incidents||0) > 3 ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}>{atm.incidents||0}</span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-slate-100 rounded-full h-1.5 w-14">
-                        <div className={`h-1.5 rounded-full ${atm.score >= 80 ? 'bg-emerald-500' : atm.score >= 60 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${atm.score}%` }} />
+                        <div className={`h-1.5 rounded-full ${atmScore >= 80 ? 'bg-emerald-500' : atmScore >= 60 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${atmScore}%` }} />
                       </div>
-                      <span className="text-xs font-semibold text-slate-700">{atm.score}%</span>
+                      <span className="text-xs font-semibold text-slate-700">{atmScore}%</span>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <StatusBadge status={atm.connectivity} />
+                    <StatusBadge status={atmConn} />
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

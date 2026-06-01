@@ -1,14 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Building2, AlertTriangle, Clock, TrendingUp, Eye, MoreHorizontal, Download, Maximize2 } from 'lucide-react';
+import { Building2, AlertTriangle, Clock, TrendingUp, Eye, MoreHorizontal, Download, Maximize2, Loader2 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import KPICard from '../components/KPICard';
 import FilterBar from '../components/FilterBar';
 import StatusBadge from '../components/StatusBadge';
 import ScoreGauge from '../components/ScoreGauge';
-import { BRANCHES, PENDING_INSPECTIONS, BRANCH_SCORE_BY_EMIRATE, TOP_INCIDENT_BRANCHES } from '../data/branches';
+import { supabase } from '../lib/supabase';
+import { BRANCHES as BRANCHES_MOCK, PENDING_INSPECTIONS, BRANCH_SCORE_BY_EMIRATE as EMIRATE_CHART_MOCK, TOP_INCIDENT_BRANCHES as TOP_MOCK } from '../data/branches';
 
 const EMIRATE_OPTIONS = ['Abu Dhabi', 'Dubai', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah', 'Umm Al Quwain'];
 
@@ -67,6 +68,21 @@ function ChartCard({ title, subtitle, children }) {
 export default function BranchNetwork() {
   const [filters, setFilters] = useState({ emirate: '', status: '', startDate: '', endDate: '' });
   const [applied, setApplied] = useState({});
+  const [BRANCHES, setBranches] = useState(BRANCHES_MOCK);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from('branches').select('*').order('id').then(({ data, error }) => {
+      if (!error && data?.length > 0) {
+        setBranches(data.map(b => ({
+          ...b,
+          lastInspection: b.last_inspection,
+          inspector: b.manager,
+        })));
+      }
+      setLoading(false);
+    });
+  }, []);
 
   const handleReset = () => { setFilters({ emirate: '', status: '', startDate: '', endDate: '' }); setApplied({}); };
   const handleApply = () => setApplied({ ...filters });
@@ -86,9 +102,24 @@ export default function BranchNetwork() {
     { key: 'endDate', label: 'End Date', type: 'date' },
   ];
 
-  const avgScore = Math.round(filteredBranches.reduce((s, b) => s + b.score, 0) / filteredBranches.length);
-  const totalIncidents = filteredBranches.reduce((s, b) => s + b.incidents, 0);
-  const totalOverdue = filteredBranches.reduce((s, b) => s + b.overdue, 0);
+  const avgScore = filteredBranches.length > 0 ? Math.round(filteredBranches.reduce((s, b) => s + b.score, 0) / filteredBranches.length) : 0;
+  const totalIncidents = filteredBranches.reduce((s, b) => s + (b.incidents || 0), 0);
+  const totalOverdue = filteredBranches.reduce((s, b) => s + (b.overdue || 0), 0);
+
+  // Compute charts from live data
+  const BRANCH_SCORE_BY_EMIRATE = useMemo(() => {
+    const map = {};
+    BRANCHES.forEach(b => {
+      if (!map[b.emirate]) map[b.emirate] = { emirate: b.emirate, scores: [], branches: 0 };
+      map[b.emirate].scores.push(b.score);
+      map[b.emirate].branches++;
+    });
+    return Object.values(map).map(e => ({ emirate: e.emirate, score: Math.round(e.scores.reduce((a, s) => a + s, 0) / e.scores.length), branches: e.branches }));
+  }, [BRANCHES]);
+
+  const TOP_INCIDENT_BRANCHES = useMemo(() =>
+    [...BRANCHES].sort((a, b) => (b.incidents || 0) - (a.incidents || 0)).slice(0, 7).map(b => ({ id: b.id, name: b.name, incidents: b.incidents || 0 })),
+  [BRANCHES]);
 
   return (
     <motion.div
@@ -97,9 +128,12 @@ export default function BranchNetwork() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.35 }}>
-        <h2 className="text-2xl font-bold text-slate-800">Branch Network</h2>
-        <p className="text-sm text-slate-400 mt-0.5">Locations / Branches — UAE Coverage Map</p>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.35 }} className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-1)' }}>Branch Network</h2>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--text-4)' }}>Locations / Branches — UAE Coverage Map</p>
+        </div>
+        {loading && <Loader2 size={18} className="animate-spin" style={{ color: 'var(--accent)' }} />}
       </motion.div>
 
       <FilterBar filters={FILTER_DEFS} values={filters} onChange={(k, v) => setFilters(f => ({ ...f, [k]: v }))} onReset={handleReset} onApply={handleApply} />

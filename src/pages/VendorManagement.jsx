@@ -1,12 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell
 } from 'recharts';
-import { Package, AlertTriangle, Clock, TrendingUp, CheckCircle2, Eye, Edit2, MoreHorizontal, Download, Maximize2 } from 'lucide-react';
+import { Package, AlertTriangle, Clock, TrendingUp, CheckCircle2, Eye, Edit2, MoreHorizontal, Download, Maximize2, Loader2 } from 'lucide-react';
 import KPICard from '../components/KPICard';
 import StatusBadge from '../components/StatusBadge';
-import { VENDORS, WORK_ORDERS, VENDOR_SLA_CHART } from '../data/vendors';
+import { supabase } from '../lib/supabase';
+import { VENDORS as VENDORS_MOCK, WORK_ORDERS as WORK_ORDERS_MOCK, VENDOR_SLA_CHART as SLA_CHART_MOCK } from '../data/vendors';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -56,21 +57,67 @@ function ChartCard({ title, subtitle, children }) {
 
 export default function VendorManagement() {
   const [search, setSearch] = useState('');
+  const [VENDORS, setVendors] = useState(VENDORS_MOCK);
+  const [WORK_ORDERS, setWorkOrders] = useState(WORK_ORDERS_MOCK);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const [vRes, woRes] = await Promise.all([
+        supabase.from('vendors').select('*').order('name'),
+        supabase.from('work_orders').select('*, vendors(name)').order('raised_date', { ascending: false }),
+      ]);
+      if (!vRes.error && vRes.data?.length > 0) {
+        setVendors(vRes.data.map(v => ({
+          ...v,
+          contractExpiry: v.contract_end,
+          slaTarget: v.sla_target,
+          slaActual: parseFloat(v.sla_actual) || v.sla_target,
+          openWOs: v.active_orders || 0,
+          status: v.status === 'Active' ? 'Compliant' : v.status,
+        })));
+      }
+      if (!woRes.error && woRes.data?.length > 0) {
+        setWorkOrders(woRes.data.map(wo => ({
+          ...wo,
+          id: wo.order_id,
+          vendor: wo.vendor_name || wo.vendors?.name || '—',
+          location: wo.location,
+          type: wo.location?.toLowerCase().includes('atm') ? 'ATM' : 'Branch',
+          category: wo.category,
+          raised: wo.raised_date,
+          due: wo.due_date,
+          status: wo.status === 'Pending' ? 'Open' : wo.status,
+        })));
+      }
+      setLoading(false);
+    }
+    load();
+  }, []);
 
   const filteredVendors = useMemo(() => {
     if (!search) return VENDORS;
     return VENDORS.filter(v => v.name.toLowerCase().includes(search.toLowerCase()) || v.category.toLowerCase().includes(search.toLowerCase()));
-  }, [search]);
+  }, [search, VENDORS]);
 
   const filteredWOs = useMemo(() => {
     if (!search) return WORK_ORDERS;
-    return WORK_ORDERS.filter(wo => wo.vendor.toLowerCase().includes(search.toLowerCase()) || wo.location.toLowerCase().includes(search.toLowerCase()));
-  }, [search]);
+    return WORK_ORDERS.filter(wo => (wo.vendor || '').toLowerCase().includes(search.toLowerCase()) || (wo.location || '').toLowerCase().includes(search.toLowerCase()));
+  }, [search, WORK_ORDERS]);
 
   const slaBreaches = VENDORS.filter(v => v.status === 'SLA Breach').length;
-  const totalOpenWOs = VENDORS.reduce((s, v) => s + v.openWOs, 0);
-  const avgResponseRate = 94.2;
-  const avgResolutionDays = 4.1;
+  const totalOpenWOs = VENDORS.reduce((s, v) => s + (v.openWOs || v.active_orders || 0), 0);
+
+  const VENDOR_SLA_CHART = useMemo(() => VENDORS.map(v => ({
+    vendor: v.name.split(' ')[0],
+    target: v.slaTarget || v.sla_target || 24,
+    actual: parseFloat(v.slaActual || v.sla_actual) || 24,
+  })), [VENDORS]);
+
+  const avgResponseRate = useMemo(() => {
+    const compliant = VENDORS.filter(v => v.status !== 'SLA Breach').length;
+    return VENDORS.length > 0 ? Math.round((compliant / VENDORS.length) * 100) : 0;
+  }, [VENDORS]);
 
   const slaBarColor = (target, actual) => actual > target ? '#EF4444' : '#10B981';
 
@@ -78,11 +125,11 @@ export default function VendorManagement() {
     <motion.div className="p-6 space-y-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Vendor Management</h2>
-          <p className="text-sm text-slate-400 mt-0.5">Vendor Accountability Dashboard — SLA Monitoring & Work Orders</p>
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-1)' }}>Vendor Management</h2>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--text-4)' }}>Vendor Accountability Dashboard — SLA Monitoring & Work Orders</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs bg-blue-100 text-blue-700 font-bold px-3 py-1.5 rounded-full">NEW MODULE</span>
+          {loading && <Loader2 size={18} className="animate-spin" style={{ color: 'var(--accent)' }} />}
         </div>
       </div>
 
@@ -93,7 +140,10 @@ export default function VendorManagement() {
           <div>
             <p className="text-sm font-semibold text-red-700">{slaBreaches} Vendors in SLA Breach</p>
             <p className="text-xs text-red-600 mt-0.5">
-              {VENDORS.filter(v => v.status === 'SLA Breach').map(v => `${v.name} (+${v.slaActual - v.slaTarget}h over target)`).join(' · ')}
+              {VENDORS.filter(v => v.status === 'SLA Breach').map(v => {
+                const over = ((parseFloat(v.slaActual || v.sla_actual) || 0) - (v.slaTarget || v.sla_target || 0)).toFixed(1);
+                return `${v.name} (+${over}h over target)`;
+              }).join(' · ')}
             </p>
           </div>
         </div>
@@ -103,8 +153,8 @@ export default function VendorManagement() {
         <KPICard title="Active Vendors" value={VENDORS.length} subtitle="Under contract" icon={Package} variant="primary" />
         <KPICard title="SLA Breaches" value={slaBreaches} subtitle="Vendors over SLA target" icon={AlertTriangle} variant="danger" />
         <KPICard title="Open Work Orders" value={totalOpenWOs} subtitle="Across all vendors" icon={Clock} variant="warning" />
-        <KPICard title="Avg. Response Rate" value={avgResponseRate} suffix="%" subtitle="Vendor SLA adherence" icon={CheckCircle2} variant="success" />
-        <KPICard title="Avg. Resolution Time" value={avgResolutionDays} suffix=" days" subtitle="Mean time to resolve" icon={TrendingUp} variant="neutral" />
+        <KPICard title="SLA Compliance" value={avgResponseRate} suffix="%" subtitle="Vendors meeting SLA" icon={CheckCircle2} variant="success" />
+        <KPICard title="Total WOs Tracked" value={WORK_ORDERS.length} subtitle="All work orders in system" icon={TrendingUp} variant="neutral" />
       </div>
 
       {/* Vendor table */}

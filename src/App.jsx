@@ -12,6 +12,7 @@ import VendorManagement from './pages/VendorManagement';
 import MerchantCompliance from './pages/MerchantCompliance';
 import Reports from './pages/Reports';
 import QualityChecklists from './pages/QualityChecklists';
+import InspectionEngine from './pages/InspectionEngine';
 import UsersManagement from './pages/UsersManagement';
 import Settings from './pages/Settings';
 
@@ -30,8 +31,10 @@ function App() {
           <Route path="observations/atms" element={<BranchObservations type="atm" />} />
           <Route path="analytics/branches" element={<Analytics />} />
           <Route path="analytics/atms" element={<Analytics type="atm" />} />
-          <Route path="inspections/branches" element={<BranchNetwork type="inspection" />} />
-          <Route path="inspections/atms" element={<ATMNetwork type="inspection" />} />
+          <Route path="inspections" element={<InspectionEngine />} />
+          <Route path="inspections/engine" element={<InspectionEngine />} />
+          <Route path="inspections/branches" element={<InspectionEngine />} />
+          <Route path="inspections/atms" element={<InspectionEngine />} />
           <Route path="checklists" element={<QualityChecklists />} />
           <Route path="checklists/templates" element={<QualityChecklists />} />
           <Route path="checklists/submissions" element={<QualityChecklists tab="submissions" />} />

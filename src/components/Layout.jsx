@@ -41,20 +41,7 @@ const NAV = [
       { label: 'ATMs', path: '/analytics/atms', icon: Cpu },
     ],
   },
-  {
-    id: 'inspections', label: 'Inspections', icon: ClipboardList,
-    children: [
-      { label: 'Branches', path: '/inspections/branches', icon: Building2 },
-      { label: 'ATMs', path: '/inspections/atms', icon: Cpu },
-    ],
-  },
-  {
-    id: 'checklists', label: 'Quality Checklists', icon: ClipboardList,
-    children: [
-      { label: 'Templates', path: '/checklists/templates', icon: FileText },
-      { label: 'Submissions', path: '/checklists/submissions', icon: FileText },
-    ],
-  },
+  { id: 'inspections', label: 'Inspection Engine', icon: ClipboardList, path: '/inspections', badge: 'NEW' },
   { id: 'vendors', label: 'Vendor Management', icon: Package, path: '/vendors', badge: 'NEW' },
   { id: 'merchants', label: 'Merchant Compliance', icon: Store, path: '/merchants', badge: 'NEW' },
   {
@@ -78,8 +65,10 @@ const PAGE_TITLES = {
   '/observations/atms': { title: 'ATM Observations', subtitle: 'Observations / ATMs' },
   '/analytics/branches': { title: 'Branch Analytics', subtitle: 'Analytics / Branches' },
   '/analytics/atms': { title: 'ATM Analytics', subtitle: 'Analytics / ATMs' },
-  '/inspections/branches': { title: 'Branch Inspections', subtitle: 'Inspections / Branches' },
-  '/inspections/atms': { title: 'ATM Inspections', subtitle: 'Inspections / ATMs' },
+  '/inspections': { title: 'Inspection Engine', subtitle: 'W1–W5 weighted compliance inspections' },
+  '/inspections/engine': { title: 'Inspection Engine', subtitle: 'W1–W5 weighted compliance inspections' },
+  '/inspections/branches': { title: 'Inspection Engine', subtitle: 'W1–W5 weighted compliance inspections' },
+  '/inspections/atms': { title: 'Inspection Engine', subtitle: 'W1–W5 weighted compliance inspections' },
   '/checklists/templates': { title: 'Checklist Templates', subtitle: 'Quality Checklists / Templates' },
   '/checklists/submissions': { title: 'Submissions', subtitle: 'Quality Checklists / Submissions' },
   '/vendors': { title: 'Vendor Management', subtitle: 'Vendor Accountability Dashboard' },

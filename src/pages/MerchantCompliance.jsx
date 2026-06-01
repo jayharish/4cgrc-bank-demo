@@ -1,12 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
-import { Store, AlertTriangle, Calendar, CheckCircle2, Eye, Edit2 } from 'lucide-react';
+import { Store, AlertTriangle, Calendar, CheckCircle2, Eye, Edit2, Loader2 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import KPICard from '../components/KPICard';
 import FilterBar from '../components/FilterBar';
 import StatusBadge from '../components/StatusBadge';
-import { MERCHANTS } from '../data/merchants';
+import { supabase } from '../lib/supabase';
+import { MERCHANTS as MERCHANTS_MOCK } from '../data/merchants';
 
 const EMIRATE_OPTIONS = ['Abu Dhabi', 'Dubai', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah'];
 const CATEGORY_OPTIONS = ['POS Partner', 'ATM Merchant', 'Loyalty Partner'];
@@ -20,6 +21,22 @@ const STATUS_COLORS = {
 export default function MerchantCompliance() {
   const [filters, setFilters] = useState({ emirate: '', category: '', status: '' });
   const [applied, setApplied] = useState({});
+  const [MERCHANTS, setMerchants] = useState(MERCHANTS_MOCK);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from('merchants').select('*').order('name').then(({ data, error }) => {
+      if (!error && data?.length > 0) {
+        setMerchants(data.map(m => ({
+          ...m,
+          score: m.compliance_score,
+          lastAudit: m.last_audit,
+          nextAudit: m.next_audit,
+        })));
+      }
+      setLoading(false);
+    });
+  }, []);
 
   const handleReset = () => { setFilters({ emirate: '', category: '', status: '' }); setApplied({}); };
   const handleApply = () => setApplied({ ...filters });
@@ -31,7 +48,7 @@ export default function MerchantCompliance() {
       if (applied.status && m.status !== applied.status) return false;
       return true;
     });
-  }, [applied]);
+  }, [applied, MERCHANTS]);
 
   const FILTER_DEFS = [
     { key: 'emirate', label: 'Emirate', type: 'select', options: EMIRATE_OPTIONS },
@@ -40,17 +57,17 @@ export default function MerchantCompliance() {
   ];
 
   const nonCompliant = filtered.filter(m => m.status === 'Non-Compliant').length;
-  const reviewDue = filtered.filter(m => m.status === 'Review Due').length;
-  const avgScore = Math.round(filtered.reduce((s, m) => s + m.score, 0) / filtered.length);
+  const reviewDue = filtered.filter(m => m.status === 'Review Due' || m.status === 'Warning').length;
+  const avgScore = filtered.length > 0 ? Math.round(filtered.reduce((s, m) => s + (m.score || m.compliance_score || 0), 0) / filtered.length) : 0;
 
   return (
     <motion.div className="p-6 space-y-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Merchant Compliance</h2>
-          <p className="text-sm text-slate-400 mt-0.5">Merchant Compliance Monitoring — POS, ATM & Loyalty Partners</p>
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-1)' }}>Merchant Compliance</h2>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--text-4)' }}>Merchant Compliance Monitoring — POS, ATM & Loyalty Partners</p>
         </div>
-        <span className="text-xs bg-blue-100 text-blue-700 font-bold px-3 py-1.5 rounded-full">NEW MODULE</span>
+        {loading && <Loader2 size={18} className="animate-spin" style={{ color: 'var(--accent)' }} />}
       </div>
 
       <FilterBar filters={FILTER_DEFS} values={filters} onChange={(k, v) => setFilters(f => ({ ...f, [k]: v }))} onReset={handleReset} onApply={handleApply} />
@@ -145,21 +162,21 @@ export default function MerchantCompliance() {
                     <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">{merchant.category}</span>
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-600 max-w-[160px] truncate">{merchant.location}</td>
-                  <td className="px-4 py-3 text-xs text-slate-500">{merchant.lastAudit}</td>
+                  <td className="px-4 py-3 text-xs text-slate-500">{merchant.lastAudit || merchant.last_audit}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      new Date(merchant.nextAudit) < new Date('2025-06-30') ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
-                    }`}>{merchant.nextAudit}</span>
+                      new Date(merchant.nextAudit || merchant.next_audit) < new Date() ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
+                    }`}>{merchant.nextAudit || merchant.next_audit}</span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 min-w-[120px]">
                       <div className="flex-1 bg-slate-100 rounded-full h-2">
                         <div
-                          className={`h-2 rounded-full transition-all ${merchant.score >= 85 ? 'bg-emerald-500' : merchant.score >= 70 ? 'bg-amber-500' : 'bg-red-500'}`}
-                          style={{ width: `${merchant.score}%` }}
+                          className={`h-2 rounded-full transition-all ${(merchant.score||merchant.compliance_score||0) >= 85 ? 'bg-emerald-500' : (merchant.score||merchant.compliance_score||0) >= 70 ? 'bg-amber-500' : 'bg-red-500'}`}
+                          style={{ width: `${merchant.score||merchant.compliance_score||0}%` }}
                         />
                       </div>
-                      <span className="text-xs font-bold text-slate-700 whitespace-nowrap">{merchant.score}%</span>
+                      <span className="text-xs font-bold text-slate-700 whitespace-nowrap">{merchant.score||merchant.compliance_score||0}%</span>
                     </div>
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={merchant.status} /></td>
