@@ -8,6 +8,7 @@ import {
   Package, LogOut, Search, Moon, Sun, Shield, ChevronLeft
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 const NAV = [
   { id: 'summary', label: 'Executive Summary', icon: LayoutDashboard, path: '/', exact: true },
@@ -224,6 +225,16 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const notifRef = useRef(null);
+  const { profile, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
+  const initials = profile?.full_name
+    ? profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : profile?.email?.[0]?.toUpperCase() || 'U';
   const pageInfo = PAGE_TITLES[location.pathname] || { title: 'Dashboard', subtitle: '' };
 
   useEffect(() => {
@@ -305,7 +316,7 @@ export default function Layout() {
             )}
           </NavLink>
           <button
-            onClick={() => { /* logout action */ }}
+            onClick={handleSignOut}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all opacity-70 hover:opacity-100"
             style={{ color: 'var(--danger)' }}
             title={collapsed ? 'Sign Out' : undefined}
@@ -425,11 +436,11 @@ export default function Layout() {
             >
               <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0"
                 style={{ background: 'linear-gradient(135deg, #478BEB, #7C3AED)' }}>
-                AD
+                {initials}
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-xs font-bold leading-tight" style={{ color: 'var(--text-1)' }}>Admin User</p>
-                <p className="text-xs leading-tight" style={{ color: 'var(--text-4)' }}>Compliance Officer</p>
+                <p className="text-xs font-bold leading-tight" style={{ color: 'var(--text-1)' }}>{profile?.full_name || profile?.email || 'User'}</p>
+                <p className="text-xs leading-tight capitalize" style={{ color: 'var(--text-4)' }}>{profile?.role || 'viewer'}</p>
               </div>
             </button>
           </div>

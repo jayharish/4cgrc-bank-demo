@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Building2, AlertTriangle, Clock, CheckCircle2, Star,
   TrendingUp, ArrowRight, Activity, Shield, Zap, BarChart2,
-  MoreHorizontal, Download, Maximize2, ChevronRight, MapPin
+  MoreHorizontal, Download, Maximize2, ChevronRight, MapPin, Package
 } from 'lucide-react';
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,

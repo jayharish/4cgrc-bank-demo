@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   User, Bell, Shield, Globe, Moon, Sun, Palette,
   CheckCircle2, Save, Camera, Mail, Phone, Building2,
-  Key, Eye, EyeOff, Monitor, Smartphone, Sliders, Zap
+  Key, Eye, EyeOff, Monitor, Smartphone, Sliders, Zap, Loader2
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 function Toggle({ value, onChange, label, description, disabled }) {
   return (
@@ -63,19 +64,34 @@ const ACCENT_COLORS = [
 
 export default function Settings() {
   const { isDark, toggle, setIsDark } = useTheme();
+  const { profile: authProfile, updateProfile } = useAuth();
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [accent, setAccent] = useState(0);
 
   const [profile, setProfile] = useState({
-    name: 'Admin User',
-    email: 'admin.user@4cgrc.com',
-    phone: '+971 50 123 4567',
-    title: 'Compliance Officer',
-    department: 'Quality Assurance',
+    name: '',
+    email: '',
+    phone: '',
+    title: '',
+    department: '',
     emirate: 'Abu Dhabi',
   });
+
+  useEffect(() => {
+    if (authProfile) {
+      setProfile({
+        name: authProfile.full_name || '',
+        email: authProfile.email || '',
+        phone: authProfile.phone || '',
+        title: authProfile.department || '',
+        department: authProfile.department || '',
+        emirate: 'Abu Dhabi',
+      });
+    }
+  }, [authProfile]);
 
   const [notifs, setNotifs] = useState({
     overdueTickets: true,
@@ -102,9 +118,21 @@ export default function Settings() {
     showGuides: true,
   });
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await updateProfile({
+        full_name: profile.name,
+        phone: profile.phone,
+        department: profile.department,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const TABS = [
@@ -153,7 +181,7 @@ export default function Settings() {
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
           style={{ background: saved ? '#22C55E' : 'linear-gradient(135deg, #2563EB, #7C3AED)' }}
         >
-          {saved ? <><CheckCircle2 size={16} /> Saved!</> : <><Save size={16} /> Save Changes</>}
+          {saving ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : saved ? <><CheckCircle2 size={16} /> Saved!</> : <><Save size={16} /> Save Changes</>}
         </motion.button>
       </div>
 

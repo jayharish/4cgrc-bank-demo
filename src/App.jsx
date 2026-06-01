@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './pages/Login';
 import ExecutiveSummary from './pages/ExecutiveSummary';
 import BranchNetwork from './pages/BranchNetwork';
 import ATMNetwork from './pages/ATMNetwork';
@@ -17,7 +19,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Layout />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route index element={<ExecutiveSummary />} />
           <Route path="locations/branches" element={<BranchNetwork />} />
           <Route path="locations/atms" element={<ATMNetwork />} />
@@ -35,9 +38,9 @@ function App() {
           <Route path="vendors" element={<VendorManagement />} />
           <Route path="merchants" element={<MerchantCompliance />} />
           <Route path="reports" element={<Reports />} />
-          <Route path="users" element={<UsersManagement />} />
-          <Route path="users/roles" element={<UsersManagement tab="roles" />} />
-          <Route path="users/permissions" element={<UsersManagement tab="permissions" />} />
+          <Route path="users" element={<ProtectedRoute requiredRole="admin"><UsersManagement /></ProtectedRoute>} />
+          <Route path="users/roles" element={<ProtectedRoute requiredRole="admin"><UsersManagement tab="roles" /></ProtectedRoute>} />
+          <Route path="users/permissions" element={<ProtectedRoute requiredRole="admin"><UsersManagement tab="permissions" /></ProtectedRoute>} />
           <Route path="settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
