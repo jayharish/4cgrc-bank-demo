@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { AlertTriangle, Clock, CheckCircle2, Plus, Eye, Edit2, Trash2, X } from 'lucide-react';
 import KPICard from '../components/KPICard';
 import FilterBar from '../components/FilterBar';
@@ -111,7 +112,7 @@ export default function BranchIncidents({ type }) {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <motion.div className="p-6 space-y-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
       {showModal && <AddTicketModal onClose={() => setShowModal(false)} />}
 
       <div className="flex items-center justify-between">
@@ -209,6 +210,6 @@ export default function BranchIncidents({ type }) {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

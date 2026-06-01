@@ -40,37 +40,36 @@ export default function DataTable({ columns, data, pageSize = 10, searchable = t
 
   const SortIcon = ({ col }) => {
     if (!col.sortable) return null;
-    if (sortKey !== col.accessor) return <ChevronsUpDown size={12} className="text-slate-300" />;
+    if (sortKey !== col.accessor) return <ChevronsUpDown size={12} style={{ color: 'var(--border)' }} />;
     return sortDir === 'asc'
-      ? <ChevronUp size={12} className="text-blue-600" />
-      : <ChevronDown size={12} className="text-blue-600" />;
+      ? <ChevronUp size={12} style={{ color: 'var(--accent)' }} />
+      : <ChevronDown size={12} style={{ color: 'var(--accent)' }} />;
   };
 
   return (
     <div className="flex flex-col gap-3">
       {searchable && (
         <div className="relative w-64">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--text-4)' }} />
           <input
             type="text"
             placeholder={searchPlaceholder}
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(0); }}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 pl-9 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            style={{ background: 'var(--surface-3)', border: '1px solid var(--border)', color: 'var(--text-2)', borderRadius: 8, fontSize: 13, paddingLeft: 34, paddingRight: 12, paddingTop: 7, paddingBottom: 7, width: '100%' }}
           />
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200">
+      <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
+            <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--border)' }}>
               {columns.map(col => (
                 <th
                   key={col.key || col.accessor}
-                  className={`px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${col.sortable ? 'cursor-pointer select-none hover:text-slate-700' : ''}`}
+                  style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', cursor: col.sortable ? 'pointer' : 'default', userSelect: 'none' }}
                   onClick={() => col.sortable && handleSort(col.accessor)}
-                  style={col.width ? { width: col.width } : {}}
                 >
                   <span className="flex items-center gap-1.5">
                     {col.label}
@@ -80,18 +79,21 @@ export default function DataTable({ columns, data, pageSize = 10, searchable = t
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-slate-100">
+          <tbody style={{ background: 'var(--surface)' }}>
             {pageData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-10 text-center text-slate-400 text-sm">
+                <td colSpan={columns.length} style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--text-4)', fontSize: 13 }}>
                   No data found
                 </td>
               </tr>
             ) : (
               pageData.map((row, i) => (
-                <tr key={i} className="hover:bg-slate-50 transition-colors duration-100">
+                <tr key={i} style={{ borderTop: i > 0 ? `1px solid var(--border-subtle)` : 'none' }}
+                  onMouseOver={e => e.currentTarget.style.background = 'var(--surface-3)'}
+                  onMouseOut={e => e.currentTarget.style.background = 'var(--surface)'}
+                >
                   {columns.map(col => (
-                    <td key={col.key || col.accessor} className="px-4 py-3 text-slate-700 whitespace-nowrap">
+                    <td key={col.key || col.accessor} style={{ padding: '10px 16px', color: 'var(--text-2)', whiteSpace: 'nowrap', fontSize: 13 }}>
                       {col.render ? col.render(row[col.accessor], row) : row[col.accessor]}
                     </td>
                   ))}
@@ -103,7 +105,7 @@ export default function DataTable({ columns, data, pageSize = 10, searchable = t
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm text-slate-500">
+        <div className="flex items-center justify-between" style={{ fontSize: 12, color: 'var(--text-4)' }}>
           <span>
             Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sorted.length)} of {sorted.length} records
           </span>
@@ -111,7 +113,7 @@ export default function DataTable({ columns, data, pageSize = 10, searchable = t
             <button
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              style={{ padding: '6px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--text-3)', cursor: page === 0 ? 'not-allowed' : 'pointer', opacity: page === 0 ? 0.4 : 1 }}
             >
               <ChevronLeft size={16} />
             </button>
@@ -126,9 +128,11 @@ export default function DataTable({ columns, data, pageSize = 10, searchable = t
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
-                    page === p ? 'bg-blue-600 text-white' : 'hover:bg-slate-100 text-slate-600'
-                  }`}
+                  style={{
+                    width: 30, height: 30, borderRadius: 8, fontSize: 11, fontWeight: 500, border: 'none', cursor: 'pointer',
+                    background: page === p ? 'var(--accent)' : 'transparent',
+                    color: page === p ? 'white' : 'var(--text-3)',
+                  }}
                 >
                   {p + 1}
                 </button>
@@ -137,7 +141,7 @@ export default function DataTable({ columns, data, pageSize = 10, searchable = t
             <button
               onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
-              className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              style={{ padding: '6px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--text-3)', cursor: page >= totalPages - 1 ? 'not-allowed' : 'pointer', opacity: page >= totalPages - 1 ? 0.4 : 1 }}
             >
               <ChevronRight size={16} />
             </button>

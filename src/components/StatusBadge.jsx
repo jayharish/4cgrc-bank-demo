@@ -1,37 +1,47 @@
-const BADGE_STYLES = {
-  'Compliant':    'bg-emerald-50 text-emerald-700 border border-emerald-200',
-  'compliant':    'bg-emerald-50 text-emerald-700 border border-emerald-200',
-  'Resolved':     'bg-emerald-50 text-emerald-700 border border-emerald-200',
-  'Completed':    'bg-emerald-50 text-emerald-700 border border-emerald-200',
-  'Online':       'bg-emerald-50 text-emerald-700 border border-emerald-200',
-  'Active':       'bg-emerald-50 text-emerald-700 border border-emerald-200',
-  'Warning':      'bg-amber-50 text-amber-700 border border-amber-200',
-  'warning':      'bg-amber-50 text-amber-700 border border-amber-200',
-  'Review Due':   'bg-amber-50 text-amber-700 border border-amber-200',
-  'In Progress':  'bg-purple-50 text-purple-700 border border-purple-200',
-  'Pending':      'bg-blue-50 text-blue-700 border border-blue-200',
-  'Open':         'bg-blue-50 text-blue-700 border border-blue-200',
-  'Critical':     'bg-red-50 text-red-700 border border-red-200',
-  'critical':     'bg-red-50 text-red-700 border border-red-200',
-  'Non-Compliant':'bg-red-50 text-red-700 border border-red-200',
-  'Overdue':      'bg-red-50 text-red-700 border border-red-200',
-  'Offline':      'bg-red-50 text-red-700 border border-red-200',
-  'SLA Breach':   'bg-red-50 text-red-700 border border-red-200',
-  'Damaged':      'bg-orange-50 text-orange-700 border border-orange-200',
-  'Missing':      'bg-orange-50 text-orange-700 border border-orange-200',
-  'Expired':      'bg-slate-100 text-slate-600 border border-slate-200',
-  'Needs Attention':'bg-amber-50 text-amber-700 border border-amber-200',
-  'Good Condition': 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+const BADGE_CONFIG = {
+  'Compliant':      { bg: 'rgba(16,185,129,0.12)',  text: '#22C55E', border: 'rgba(34,197,94,0.25)' },
+  'compliant':      { bg: 'rgba(16,185,129,0.12)',  text: '#22C55E', border: 'rgba(34,197,94,0.25)' },
+  'Resolved':       { bg: 'rgba(16,185,129,0.12)',  text: '#22C55E', border: 'rgba(34,197,94,0.25)' },
+  'Completed':      { bg: 'rgba(16,185,129,0.12)',  text: '#22C55E', border: 'rgba(34,197,94,0.25)' },
+  'Online':         { bg: 'rgba(16,185,129,0.12)',  text: '#22C55E', border: 'rgba(34,197,94,0.25)' },
+  'Active':         { bg: 'rgba(16,185,129,0.12)',  text: '#22C55E', border: 'rgba(34,197,94,0.25)' },
+  'Good Condition': { bg: 'rgba(16,185,129,0.12)',  text: '#22C55E', border: 'rgba(34,197,94,0.25)' },
+  'Warning':        { bg: 'rgba(245,158,11,0.12)',  text: '#F59E0B', border: 'rgba(245,158,11,0.25)' },
+  'warning':        { bg: 'rgba(245,158,11,0.12)',  text: '#F59E0B', border: 'rgba(245,158,11,0.25)' },
+  'Review Due':     { bg: 'rgba(245,158,11,0.12)',  text: '#F59E0B', border: 'rgba(245,158,11,0.25)' },
+  'Needs Attention':{ bg: 'rgba(245,158,11,0.12)',  text: '#F59E0B', border: 'rgba(245,158,11,0.25)' },
+  'In Progress':    { bg: 'rgba(139,92,246,0.12)',  text: '#A78BFA', border: 'rgba(139,92,246,0.25)' },
+  'Pending':        { bg: 'rgba(71,139,235,0.12)',  text: '#60A5FA', border: 'rgba(71,139,235,0.25)' },
+  'Open':           { bg: 'rgba(71,139,235,0.12)',  text: '#60A5FA', border: 'rgba(71,139,235,0.25)' },
+  'Critical':       { bg: 'rgba(239,68,68,0.12)',   text: '#F87171', border: 'rgba(239,68,68,0.25)' },
+  'critical':       { bg: 'rgba(239,68,68,0.12)',   text: '#F87171', border: 'rgba(239,68,68,0.25)' },
+  'Non-Compliant':  { bg: 'rgba(239,68,68,0.12)',   text: '#F87171', border: 'rgba(239,68,68,0.25)' },
+  'Overdue':        { bg: 'rgba(239,68,68,0.12)',   text: '#F87171', border: 'rgba(239,68,68,0.25)' },
+  'Offline':        { bg: 'rgba(239,68,68,0.12)',   text: '#F87171', border: 'rgba(239,68,68,0.25)' },
+  'SLA Breach':     { bg: 'rgba(239,68,68,0.12)',   text: '#F87171', border: 'rgba(239,68,68,0.25)' },
+  'Damaged':        { bg: 'rgba(249,115,22,0.12)',  text: '#FB923C', border: 'rgba(249,115,22,0.25)' },
+  'Missing':        { bg: 'rgba(249,115,22,0.12)',  text: '#FB923C', border: 'rgba(249,115,22,0.25)' },
+  'Expired':        { bg: 'rgba(100,116,139,0.12)', text: '#94A3B8', border: 'rgba(100,116,139,0.25)' },
 };
 
-const DEFAULT_STYLE = 'bg-slate-100 text-slate-600 border border-slate-200';
+const DEFAULT_CONFIG = { bg: 'rgba(100,116,139,0.10)', text: '#94A3B8', border: 'rgba(100,116,139,0.20)' };
 
 export default function StatusBadge({ status, size = 'sm' }) {
-  const style = BADGE_STYLES[status] || DEFAULT_STYLE;
-  const sizeClass = size === 'xs' ? 'text-xs px-2 py-0.5' : 'text-xs px-2.5 py-1';
+  const cfg = BADGE_CONFIG[status] || DEFAULT_CONFIG;
+  const padding = size === 'xs' ? '2px 8px' : '3px 10px';
 
   return (
-    <span className={`inline-flex items-center rounded-full font-medium ${style} ${sizeClass}`}>
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      borderRadius: 20,
+      fontSize: 11,
+      fontWeight: 600,
+      padding,
+      background: cfg.bg,
+      color: cfg.text,
+      border: `1px solid ${cfg.border}`,
+    }}>
       {status}
     </span>
   );

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import { Store, AlertTriangle, Calendar, CheckCircle2, Eye, Edit2 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
@@ -43,7 +44,7 @@ export default function MerchantCompliance() {
   const avgScore = Math.round(filtered.reduce((s, m) => s + m.score, 0) / filtered.length);
 
   return (
-    <div className="p-6 space-y-6">
+    <motion.div className="p-6 space-y-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Merchant Compliance</h2>
@@ -199,6 +200,6 @@ export default function MerchantCompliance() {
           );
         })}
       </div>
-    </div>
+    </motion.div>
   );
 }

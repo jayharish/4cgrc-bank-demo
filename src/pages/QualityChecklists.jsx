@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { ClipboardList, Eye, Edit2, Copy, ChevronDown, ChevronUp, CheckSquare, Square, Plus } from 'lucide-react';
 
 const CHECKLISTS = [
@@ -245,7 +246,7 @@ export default function QualityChecklists({ tab }) {
   const [activeTab, setActiveTab] = useState(tab || 'templates');
 
   return (
-    <div className="p-6 space-y-6">
+    <motion.div className="p-6 space-y-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Quality Checklists</h2>
@@ -352,6 +353,6 @@ export default function QualityChecklists({ tab }) {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

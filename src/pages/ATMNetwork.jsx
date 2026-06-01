@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Cpu, AlertTriangle, Clock, WifiOff, MoreHorizontal, Download, Maximize2 } from 'lucide-react';
@@ -92,7 +93,7 @@ export default function ATMNetwork() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <motion.div className="p-6 space-y-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
       <div>
         <h2 className="text-2xl font-bold text-slate-800">ATM Network</h2>
         <p className="text-sm text-slate-400 mt-0.5">Locations / ATMs — UAE ATM Coverage & Status</p>
@@ -267,6 +268,6 @@ export default function ATMNetwork() {
           </ResponsiveContainer>
         </ChartCard>
       </div>
-    </div>
+    </motion.div>
   );
 }

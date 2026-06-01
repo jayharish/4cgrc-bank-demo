@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Building2, AlertTriangle, Clock, TrendingUp, Eye, MoreHorizontal, Download, Maximize2 } from 'lucide-react';
@@ -90,20 +91,31 @@ export default function BranchNetwork() {
   const totalOverdue = filteredBranches.reduce((s, b) => s + b.overdue, 0);
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
+    <motion.div
+      className="p-6 space-y-6"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.35 }}>
         <h2 className="text-2xl font-bold text-slate-800">Branch Network</h2>
         <p className="text-sm text-slate-400 mt-0.5">Locations / Branches — UAE Coverage Map</p>
-      </div>
+      </motion.div>
 
       <FilterBar filters={FILTER_DEFS} values={filters} onChange={(k, v) => setFilters(f => ({ ...f, [k]: v }))} onReset={handleReset} onApply={handleApply} />
 
       {/* KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KPICard title="Avg. Branch Score" value={avgScore} suffix="%" subtitle="Score across filtered network" icon={TrendingUp} variant="primary" />
-        <KPICard title="Unique Locations" value={filteredBranches.length} subtitle="Branches in filtered view" icon={Building2} variant="neutral" />
-        <KPICard title="Incidents Reported" value={totalIncidents} subtitle="Across filtered branches" icon={AlertTriangle} variant="danger" />
-        <KPICard title="Overdue Tickets" value={totalOverdue} subtitle="Requires immediate attention" icon={Clock} variant="danger" />
+        {[
+          { title: 'Avg. Branch Score', value: avgScore, suffix: '%', subtitle: 'Score across filtered network', icon: TrendingUp, variant: 'primary' },
+          { title: 'Unique Locations', value: filteredBranches.length, subtitle: 'Branches in filtered view', icon: Building2, variant: 'neutral' },
+          { title: 'Incidents Reported', value: totalIncidents, subtitle: 'Across filtered branches', icon: AlertTriangle, variant: 'danger' },
+          { title: 'Overdue Tickets', value: totalOverdue, subtitle: 'Requires immediate attention', icon: Clock, variant: 'danger' },
+        ].map((card, i) => (
+          <motion.div key={card.title} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.07, duration: 0.35 }}>
+            <KPICard {...card} />
+          </motion.div>
+        ))}
       </div>
 
       {/* Map + gauge */}
@@ -315,6 +327,6 @@ export default function BranchNetwork() {
           </ResponsiveContainer>
         </ChartCard>
       </div>
-    </div>
+    </motion.div>
   );
 }

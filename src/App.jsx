@@ -11,6 +11,7 @@ import MerchantCompliance from './pages/MerchantCompliance';
 import Reports from './pages/Reports';
 import QualityChecklists from './pages/QualityChecklists';
 import UsersManagement from './pages/UsersManagement';
+import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
           <Route path="users" element={<UsersManagement />} />
           <Route path="users/roles" element={<UsersManagement tab="roles" />} />
           <Route path="users/permissions" element={<UsersManagement tab="permissions" />} />
+          <Route path="settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

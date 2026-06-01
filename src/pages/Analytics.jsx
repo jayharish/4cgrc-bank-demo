@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
@@ -96,11 +97,11 @@ export default function Analytics({ type }) {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
+    <motion.div className="p-6 space-y-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.35 }}>
         <h2 className="text-2xl font-bold text-slate-800">{type === 'atm' ? 'ATM Analytics' : 'Branch Analytics'}</h2>
         <p className="text-sm text-slate-400 mt-0.5">Analytics / {type === 'atm' ? 'ATMs' : 'Branches'} — Incident Breakdowns & Trends</p>
-      </div>
+      </motion.div>
 
       <FilterBar filters={FILTER_DEFS} values={filters} onChange={(k, v) => setFilters(f => ({ ...f, [k]: v }))} onReset={handleReset} onApply={handleApply} />
 
@@ -222,13 +223,14 @@ export default function Analytics({ type }) {
           { label: 'Most Common Type', value: 'Expired Poster', sub: '98 occurrences' },
           { label: 'Top Affected Dept.', value: 'ATM', sub: '344 incidents (60.2%)' },
         ].map((item, i) => (
-          <div key={i} className="bg-white rounded-xl border border-slate-200 px-4 py-3.5">
+          <motion.div key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.06, duration: 0.35 }}
+            className="bg-white rounded-xl border border-slate-200 px-4 py-3.5">
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{item.label}</p>
             <p className="text-lg font-bold text-slate-800">{item.value}</p>
             <p className="text-xs text-slate-400 mt-0.5">{item.sub}</p>
-          </div>
+          </motion.div>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 }

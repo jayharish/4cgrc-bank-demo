@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { FileText, Download, Cloud, CheckCircle2, Clock, BarChart2, Package, Shield } from 'lucide-react';
 import FilterBar from '../components/FilterBar';
 
@@ -44,7 +45,7 @@ export default function Reports() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <motion.div className="p-6 space-y-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
       <div>
         <h2 className="text-2xl font-bold text-slate-800">Reports</h2>
         <p className="text-sm text-slate-400 mt-0.5">Generate & export compliance reports for audit and governance</p>
@@ -191,6 +192,6 @@ export default function Reports() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { Eye, Edit2, Trash2, Plus, X, ClipboardList, Building2, Users } from 'lucide-react';
 import KPICard from '../components/KPICard';
 import FilterBar from '../components/FilterBar';
@@ -86,7 +87,7 @@ export default function BranchObservations({ type }) {
   const { totalMetrics, totalObservations, branchesVisited, departments, deleted } = OBSERVATIONS_SUMMARY;
 
   return (
-    <div className="p-6 space-y-6">
+    <motion.div className="p-6 space-y-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
       {showModal && <AddObservationModal onClose={() => setShowModal(false)} />}
 
       <div className="flex items-center justify-between">
@@ -182,6 +183,6 @@ export default function BranchObservations({ type }) {
           <p className="text-xs text-slate-400">Total observations across all periods: {totalObservations.toLocaleString()}</p>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

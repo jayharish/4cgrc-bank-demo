@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Users, Shield, Key, Plus, Eye, Edit2, Trash2 } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 
@@ -31,7 +32,7 @@ export default function UsersManagement({ tab }) {
     : USERS;
 
   return (
-    <div className="p-6 space-y-6">
+    <motion.div className="p-6 space-y-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Users Management</h2>
@@ -210,6 +211,6 @@ export default function UsersManagement({ tab }) {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

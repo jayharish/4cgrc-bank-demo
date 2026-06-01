@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell
 } from 'recharts';
@@ -74,7 +75,7 @@ export default function VendorManagement() {
   const slaBarColor = (target, actual) => actual > target ? '#EF4444' : '#10B981';
 
   return (
-    <div className="p-6 space-y-6">
+    <motion.div className="p-6 space-y-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Vendor Management</h2>
@@ -244,6 +245,6 @@ export default function VendorManagement() {
           </table>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
