@@ -1,0 +1,14 @@
+export const MERCHANTS = [
+  { id: 'MCH-001', name: 'Carrefour UAE', category: 'POS Partner', location: 'Mall of the Emirates, Dubai', emirate: 'Dubai', lat: 25.1182, lng: 55.2003, lastAudit: '2025-05-15', nextAudit: '2025-08-15', score: 96, status: 'Compliant' },
+  { id: 'MCH-002', name: 'LuLu Hypermarket', category: 'POS Partner', location: 'Yas Mall, Abu Dhabi', emirate: 'Abu Dhabi', lat: 24.4858, lng: 54.6064, lastAudit: '2025-05-10', nextAudit: '2025-08-10', score: 88, status: 'Compliant' },
+  { id: 'MCH-003', name: 'Noon UAE', category: 'Loyalty Partner', location: 'Dubai Internet City', emirate: 'Dubai', lat: 25.1002, lng: 55.1544, lastAudit: '2025-03-20', nextAudit: '2025-06-20', score: 72, status: 'Review Due' },
+  { id: 'MCH-004', name: 'Emirates NBD ATM (Merchant)', category: 'ATM Merchant', location: 'Gold Souk, Dubai', emirate: 'Dubai', lat: 25.2869, lng: 55.3097, lastAudit: '2025-04-05', nextAudit: '2025-07-05', score: 61, status: 'Non-Compliant' },
+  { id: 'MCH-005', name: 'Spinneys', category: 'POS Partner', location: 'Al Reem Island, Abu Dhabi', emirate: 'Abu Dhabi', lat: 24.5007, lng: 54.4049, lastAudit: '2025-05-20', nextAudit: '2025-08-20', score: 94, status: 'Compliant' },
+  { id: 'MCH-006', name: 'ADNOC Distribution', category: 'ATM Merchant', location: 'Multiple UAE Locations', emirate: 'Abu Dhabi', lat: 24.4586, lng: 54.6138, lastAudit: '2025-04-15', nextAudit: '2025-07-15', score: 79, status: 'Compliant' },
+  { id: 'MCH-007', name: 'Al Ansari Exchange', category: 'Loyalty Partner', location: 'Deira, Dubai', emirate: 'Dubai', lat: 25.2697, lng: 55.3094, lastAudit: '2025-02-28', nextAudit: '2025-05-28', score: 55, status: 'Non-Compliant' },
+  { id: 'MCH-008', name: 'Etisalat Business', category: 'POS Partner', location: 'Sharjah Central', emirate: 'Sharjah', lat: 25.3573, lng: 55.3910, lastAudit: '2025-04-22', nextAudit: '2025-07-22', score: 83, status: 'Compliant' },
+  { id: 'MCH-009', name: 'Virgin Megastore UAE', category: 'POS Partner', location: 'Dubai Mall', emirate: 'Dubai', lat: 25.1972, lng: 55.2796, lastAudit: '2025-05-18', nextAudit: '2025-08-18', score: 91, status: 'Compliant' },
+  { id: 'MCH-010', name: 'Waitrose Emirates', category: 'POS Partner', location: 'JBR, Dubai', emirate: 'Dubai', lat: 25.0787, lng: 55.1320, lastAudit: '2025-03-10', nextAudit: '2025-06-10', score: 67, status: 'Review Due' },
+  { id: 'MCH-011', name: 'RAK Ceramics', category: 'ATM Merchant', location: 'RAK City', emirate: 'Ras Al Khaimah', lat: 25.6744, lng: 55.9944, lastAudit: '2025-05-05', nextAudit: '2025-08-05', score: 85, status: 'Compliant' },
+  { id: 'MCH-012', name: 'Al Mana Fashion', category: 'Loyalty Partner', location: 'City Centre Sharjah', emirate: 'Sharjah', lat: 25.3281, lng: 55.3802, lastAudit: '2025-01-15', nextAudit: '2025-04-15', score: 48, status: 'Non-Compliant' },
+];
