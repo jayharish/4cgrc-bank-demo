@@ -10,13 +10,13 @@ const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
 const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
   type: 'magiclink',
   email: 'jayh.jethva@gmail.com',
-  options: { redirectTo: 'http://localhost:5176/' }
+  options: { redirectTo: 'http://localhost:3000/' }
 });
 if (linkErr) { console.error('Link error:', linkErr); process.exit(1); }
 
 const magicUrl = linkData.properties.action_link.replace(
   'http://localhost:3000',
-  'http://localhost:5176'
+  'http://localhost:3000'
 );
 console.log('Magic link ready');
 
@@ -31,7 +31,7 @@ await page.screenshot({ path: '/tmp/s1-after-login.png' });
 console.log('After-login captured');
 
 // Now go to dashboard
-await page.goto('http://localhost:5176/', { waitUntil: 'networkidle2' });
+await page.goto('http://localhost:3000/', { waitUntil: 'networkidle2' });
 await new Promise(r => setTimeout(r, 2000));
 await page.screenshot({ path: '/tmp/s2-dashboard.png' });
 console.log('Dashboard captured');
@@ -39,7 +39,7 @@ console.log('Dashboard captured');
 // Navigate to Inspection Engine — capture console errors
 const consoleErrors = [];
 page.on('console', msg => { if (msg.type() === 'error' || msg.type() === 'warn') consoleErrors.push(`[${msg.type()}] ${msg.text()}`); });
-await page.goto('http://localhost:5176/inspections', { waitUntil: 'networkidle2' });
+await page.goto('http://localhost:3000/inspections', { waitUntil: 'networkidle2' });
 await new Promise(r => setTimeout(r, 2500));
 console.log('Console messages:', consoleErrors.join('\n') || 'none');
 await page.screenshot({ path: '/tmp/s3-inspection-top.png' });

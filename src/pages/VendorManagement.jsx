@@ -6,7 +6,7 @@ import {
 import { Package, AlertTriangle, Clock, TrendingUp, CheckCircle2, Eye, Edit2, MoreHorizontal, Download, Maximize2, Loader2 } from 'lucide-react';
 import KPICard from '../components/KPICard';
 import StatusBadge from '../components/StatusBadge';
-import { supabase } from '../lib/supabase';
+import { dbQuery } from '../lib/dataApi';
 import { VENDORS as VENDORS_MOCK, WORK_ORDERS as WORK_ORDERS_MOCK, VENDOR_SLA_CHART as SLA_CHART_MOCK } from '../data/vendors';
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -64,8 +64,8 @@ export default function VendorManagement() {
   useEffect(() => {
     async function load() {
       const [vRes, woRes] = await Promise.all([
-        supabase.from('vendors').select('*').order('name'),
-        supabase.from('work_orders').select('*, vendors(name)').order('raised_date', { ascending: false }),
+        dbQuery('vendors', { order: { col: 'name', asc: true } }),
+        dbQuery('work_orders', { select: '*, vendors(name)', order: { col: 'raised_date', asc: false } }),
       ]);
       if (!vRes.error && vRes.data?.length > 0) {
         setVendors(vRes.data.map(v => ({
@@ -150,11 +150,11 @@ export default function VendorManagement() {
       )}
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <KPICard title="Active Vendors" value={VENDORS.length} subtitle="Under contract" icon={Package} variant="primary" />
-        <KPICard title="SLA Breaches" value={slaBreaches} subtitle="Vendors over SLA target" icon={AlertTriangle} variant="danger" />
-        <KPICard title="Open Work Orders" value={totalOpenWOs} subtitle="Across all vendors" icon={Clock} variant="warning" />
-        <KPICard title="SLA Compliance" value={avgResponseRate} suffix="%" subtitle="Vendors meeting SLA" icon={CheckCircle2} variant="success" />
-        <KPICard title="Total WOs Tracked" value={WORK_ORDERS.length} subtitle="All work orders in system" icon={TrendingUp} variant="neutral" />
+        <KPICard title="Active Vendors" value={VENDORS.length} subtitle="Under contract" variant="primary" />
+        <KPICard title="SLA Breaches" value={slaBreaches} target={0} targetLabel="target" trendGoodWhenDown variant="danger" />
+        <KPICard title="Open Work Orders" value={totalOpenWOs} subtitle="Across all vendors" variant="warning" />
+        <KPICard title="SLA Compliance" value={avgResponseRate} suffix="%" target={95} targetLabel="SLA target" variant="success" />
+        <KPICard title="Total WOs Tracked" value={WORK_ORDERS.length} subtitle="All work orders in system" variant="neutral" />
       </div>
 
       {/* Vendor table */}

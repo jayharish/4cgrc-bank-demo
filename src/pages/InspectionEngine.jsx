@@ -5,7 +5,7 @@ import {
   ChevronDown, Building2, AlertTriangle, Award, Clock, FileText, X,
   RefreshCw, Loader2, Send, Eye, Calendar
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { dbQuery, dbInsert, dbUpdate } from '../lib/dataApi';
 import { useAuth } from '../context/AuthContext';
 
 const WEIGHT_META = {
@@ -253,7 +253,7 @@ function InspectionForm({ template, targetId, targetName, inspectorNote, profile
       const targets = isAtm ? atms : branches;
       const target = targets.find(t => t.id === targetId);
 
-      const { data: submission } = await supabase.from('checklist_submissions').insert({
+      const { data: submissionArr } = await dbInsert('checklist_submissions', {
         template_id: template.id,
         branch_id: isAtm ? null : targetId,
         atm_id: isAtm ? targetId : null,
@@ -265,7 +265,8 @@ function InspectionForm({ template, targetId, targetName, inspectorNote, profile
         inspector_name: profile?.full_name || profile?.email,
         branch_name: target?.name || targetId,
         tickets_created: 0,
-      }).select().single();
+      });
+      const submission = Array.isArray(submissionArr) ? submissionArr[0] : submissionArr;
 
       // Auto-create incidents for failed W3–W5 items
       const failedItems = sections.flatMap(s =>
@@ -281,7 +282,7 @@ function InspectionForm({ template, targetId, targetName, inspectorNote, profile
         dueDate.setHours(dueDate.getHours() + SLA_HOURS[item.weight]);
         const ticketId = `TKT-${Date.now().toString().slice(-6)}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
 
-        await supabase.from('incidents').insert({
+        await dbInsert('incidents', {
           ticket_id: ticketId,
           title: `[Inspection Finding] ${item.text}`,
           description: `Auto-generated from inspection of ${target?.name || targetId}. Section: ${item.sectionTitle}. Regulatory ref: ${item.ref || 'N/A'}`,
@@ -302,11 +303,11 @@ function InspectionForm({ template, targetId, targetName, inspectorNote, profile
       }
 
       if (submission) {
-        await supabase.from('checklist_submissions').update({ tickets_created: ticketCount }).eq('id', submission.id);
-        await supabase.from('checklist_templates').update({
+        await dbUpdate('checklist_submissions', { tickets_created: ticketCount }, { id: submission.id });
+        await dbUpdate('checklist_templates', {
           last_used: new Date().toISOString().split('T')[0],
           use_count: (template.use_count || 0) + 1,
-        }).eq('id', template.id);
+        }, { id: template.id });
       }
 
       setSubmitted({ score, failed, ticketCount, targetName: target?.name || targetId });
@@ -582,10 +583,10 @@ export default function InspectionEngine() {
     async function load() {
       setLoading(true);
       const [tmpl, subs, br, atm] = await Promise.all([
-        supabase.from('checklist_templates').select('*').eq('is_active', true).order('created_at'),
-        supabase.from('checklist_submissions').select('*').order('submitted_at', { ascending: false }).limit(50),
-        supabase.from('branches').select('id,name,emirate').order('name'),
-        supabase.from('atms').select('id,name,emirate').order('name'),
+        dbQuery('checklist_templates', { filters: [['is_active', true]], order: { col: 'created_at', asc: true } }),
+        dbQuery('checklist_submissions', { order: { col: 'submitted_at', asc: false }, limit: 50 }),
+        dbQuery('branches', { select: 'id,name,emirate', order: { col: 'name', asc: true } }),
+        dbQuery('atms', { select: 'id,name,emirate', order: { col: 'name', asc: true } }),
       ]);
       setTemplates(tmpl.data || []);
       setSubmissions(subs.data || []);
@@ -611,7 +612,7 @@ export default function InspectionEngine() {
     setInspecting(null);
     setActiveTab('history');
     // Refresh submissions
-    supabase.from('checklist_submissions').select('*').order('submitted_at', { ascending: false }).limit(50)
+    dbQuery('checklist_submissions', { order: { col: 'submitted_at', asc: false }, limit: 50 })
       .then(({ data }) => setSubmissions(data || []));
   };
 

@@ -6,7 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import KPICard from '../components/KPICard';
 import FilterBar from '../components/FilterBar';
 import StatusBadge from '../components/StatusBadge';
-import { supabase } from '../lib/supabase';
+import { dbQuery } from '../lib/dataApi';
 import { MERCHANTS as MERCHANTS_MOCK } from '../data/merchants';
 
 const EMIRATE_OPTIONS = ['Abu Dhabi', 'Dubai', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah'];
@@ -25,7 +25,7 @@ export default function MerchantCompliance() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.from('merchants').select('*').order('name').then(({ data, error }) => {
+    dbQuery('merchants', { order: { col: 'name', asc: true } }).then(({ data, error }) => {
       if (!error && data?.length > 0) {
         setMerchants(data.map(m => ({
           ...m,
@@ -73,10 +73,10 @@ export default function MerchantCompliance() {
       <FilterBar filters={FILTER_DEFS} values={filters} onChange={(k, v) => setFilters(f => ({ ...f, [k]: v }))} onReset={handleReset} onApply={handleApply} />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KPICard title="Registered Merchants" value={filtered.length} subtitle="In filtered view" icon={Store} variant="primary" />
-        <KPICard title="Non-Compliant" value={nonCompliant} subtitle="Require immediate action" icon={AlertTriangle} variant="danger" />
-        <KPICard title="Reviews Due" value={reviewDue} subtitle="Audits overdue this month" icon={Calendar} variant="warning" />
-        <KPICard title="Overall Compliance" value={avgScore} suffix="%" subtitle="Average compliance score" icon={CheckCircle2} variant={avgScore >= 85 ? 'success' : 'warning'} />
+        <KPICard title="Registered Merchants" value={filtered.length} subtitle="In filtered view" variant="primary" />
+        <KPICard title="Non-Compliant" value={nonCompliant} target={0} targetLabel="target" trendGoodWhenDown variant="danger" />
+        <KPICard title="Reviews Due" value={reviewDue} target={0} targetLabel="target" trendGoodWhenDown variant="warning" />
+        <KPICard title="Overall Compliance" value={avgScore} suffix="%" target={90} targetLabel="compliance target" variant={avgScore >= 85 ? 'success' : 'warning'} />
       </div>
 
       {/* Map */}

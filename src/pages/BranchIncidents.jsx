@@ -4,7 +4,7 @@ import { AlertTriangle, Clock, CheckCircle2, Plus, Edit2, Trash2, X, Loader2, Re
 import KPICard from '../components/KPICard';
 import FilterBar from '../components/FilterBar';
 import StatusBadge from '../components/StatusBadge';
-import { supabase } from '../lib/supabase';
+import { dbQuery, dbInsert, dbUpdate, dbDelete } from '../lib/dataApi';
 import { useAuth } from '../context/AuthContext';
 
 const EMIRATE_OPTIONS = ['Abu Dhabi', 'Dubai', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah', 'Umm Al Quwain'];
@@ -35,11 +35,11 @@ function IncidentModal({ incident, onClose, onSaved, type }) {
     setSaving(true); setError('');
     try {
       if (isEdit) {
-        const { error } = await supabase.from('incidents').update({ ...form, updated_at: new Date().toISOString() }).eq('id', incident.id);
+        const { error } = await dbUpdate('incidents', { ...form, updated_at: new Date().toISOString() }, { id: incident.id });
         if (error) throw error;
       } else {
         const ticket_id = `TKT-${Date.now().toString().slice(-6)}`;
-        const { error } = await supabase.from('incidents').insert({ ...form, ticket_id, reported_date: new Date().toISOString().split('T')[0] });
+        const { error } = await dbInsert('incidents', { ...form, ticket_id, reported_date: new Date().toISOString().split('T')[0] });
         if (error) throw error;
       }
       onSaved();
@@ -129,11 +129,10 @@ export default function BranchIncidents({ type }) {
 
   const fetchIncidents = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('incidents')
-      .select('*')
-      .eq('type', type || 'branch')
-      .order('created_at', { ascending: false });
+    const { data, error } = await dbQuery('incidents', {
+      filters: [['type', type || 'branch']],
+      order: { col: 'created_at', asc: false },
+    });
     if (!error) setIncidents(data || []);
     setLoading(false);
   };
@@ -142,7 +141,7 @@ export default function BranchIncidents({ type }) {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this incident?')) return;
-    await supabase.from('incidents').delete().eq('id', id);
+    await dbDelete('incidents', { id });
     setIncidents(prev => prev.filter(i => i.id !== id));
   };
 
@@ -207,10 +206,10 @@ export default function BranchIncidents({ type }) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { title: 'Total Incidents', value: stats.total, icon: AlertTriangle, variant: 'danger' },
-          { title: 'Overdue', value: stats.overdue, icon: Clock, variant: 'warning' },
-          { title: 'Resolved', value: stats.resolved, icon: CheckCircle2, variant: 'success' },
-          { title: 'Critical', value: stats.critical, icon: AlertTriangle, variant: 'danger' },
+          { title: 'Total Incidents', value: stats.total, subtitle: 'In database', variant: 'danger' },
+          { title: 'Overdue', value: stats.overdue, target: 0, targetLabel: 'target', trendGoodWhenDown: true, variant: 'warning' },
+          { title: 'Resolved', value: stats.resolved, target: stats.total, targetLabel: 'total', variant: 'success' },
+          { title: 'Critical', value: stats.critical, target: 0, targetLabel: 'target', trendGoodWhenDown: true, variant: 'danger' },
         ].map((card, i) => (
           <motion.div key={card.title} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.07 }}>
             <KPICard {...card} />

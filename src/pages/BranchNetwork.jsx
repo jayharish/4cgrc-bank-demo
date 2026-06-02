@@ -8,7 +8,7 @@ import KPICard from '../components/KPICard';
 import FilterBar from '../components/FilterBar';
 import StatusBadge from '../components/StatusBadge';
 import ScoreGauge from '../components/ScoreGauge';
-import { supabase } from '../lib/supabase';
+import { dbQuery } from '../lib/dataApi';
 import { BRANCHES as BRANCHES_MOCK, PENDING_INSPECTIONS, BRANCH_SCORE_BY_EMIRATE as EMIRATE_CHART_MOCK, TOP_INCIDENT_BRANCHES as TOP_MOCK } from '../data/branches';
 
 const EMIRATE_OPTIONS = ['Abu Dhabi', 'Dubai', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah', 'Umm Al Quwain'];
@@ -72,13 +72,9 @@ export default function BranchNetwork() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.from('branches').select('*').order('id').then(({ data, error }) => {
+    dbQuery('branches', { order: { col: 'name', asc: true } }).then(({ data, error }) => {
       if (!error && data?.length > 0) {
-        setBranches(data.map(b => ({
-          ...b,
-          lastInspection: b.last_inspection,
-          inspector: b.manager,
-        })));
+        setBranches(data.map(b => ({ ...b, lastInspection: b.last_inspection, inspector: b.manager })));
       }
       setLoading(false);
     });
@@ -93,7 +89,7 @@ export default function BranchNetwork() {
       if (applied.status && b.status !== applied.status) return false;
       return true;
     });
-  }, [applied]);
+  }, [applied, BRANCHES]);
 
   const FILTER_DEFS = [
     { key: 'emirate', label: 'Emirate', type: 'select', options: EMIRATE_OPTIONS },
@@ -141,10 +137,10 @@ export default function BranchNetwork() {
       {/* KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { title: 'Avg. Branch Score', value: avgScore, suffix: '%', subtitle: 'Score across filtered network', icon: TrendingUp, variant: 'primary' },
-          { title: 'Unique Locations', value: filteredBranches.length, subtitle: 'Branches in filtered view', icon: Building2, variant: 'neutral' },
-          { title: 'Incidents Reported', value: totalIncidents, subtitle: 'Across filtered branches', icon: AlertTriangle, variant: 'danger' },
-          { title: 'Overdue Tickets', value: totalOverdue, subtitle: 'Requires immediate attention', icon: Clock, variant: 'danger' },
+          { title: 'Avg. Branch Score', value: avgScore, suffix: '%', target: 85, targetLabel: 'compliance target', variant: 'primary' },
+          { title: 'Unique Locations', value: filteredBranches.length, subtitle: 'Branches in filtered view', variant: 'neutral' },
+          { title: 'Incidents Reported', value: totalIncidents, target: 0, targetLabel: 'target', trendGoodWhenDown: true, variant: 'danger' },
+          { title: 'Overdue Tickets', value: totalOverdue, target: 0, targetLabel: 'target', trendGoodWhenDown: true, variant: 'danger' },
         ].map((card, i) => (
           <motion.div key={card.title} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.07, duration: 0.35 }}>
             <KPICard {...card} />

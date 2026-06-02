@@ -1,101 +1,145 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import { ClipboardList } from 'lucide-react';
 
-function useCountUp(target, duration = 1200) {
+function useCountUp(target, duration = 1000) {
   const [value, setValue] = useState(0);
-  const start = useRef(null);
   const raf = useRef(null);
-
+  const start = useRef(null);
   useEffect(() => {
-    const numTarget = parseFloat(String(target).replace(/[^0-9.]/g, ''));
-    if (isNaN(numTarget)) { setValue(target); return; }
-
+    const n = parseFloat(String(target).replace(/[^0-9.]/g, ''));
+    if (isNaN(n)) { setValue(target); return; }
+    start.current = null;
     const animate = (ts) => {
       if (!start.current) start.current = ts;
-      const progress = Math.min((ts - start.current) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setValue(Math.round(eased * numTarget * 10) / 10);
-      if (progress < 1) raf.current = requestAnimationFrame(animate);
+      const p = Math.min((ts - start.current) / duration, 1);
+      const e = 1 - Math.pow(1 - p, 3);
+      setValue(Math.round(e * n * 10) / 10);
+      if (p < 1) raf.current = requestAnimationFrame(animate);
     };
-
     raf.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(raf.current);
   }, [target, duration]);
-
   return value;
 }
 
-const VARIANT_BORDER = {
-  primary: 'var(--accent)',
+const STATUS_COLOR = {
+  primary: '#60A5FA',
+  success: '#10B981',
   danger:  '#EF4444',
   warning: '#F59E0B',
-  success: '#10B981',
-  neutral: '#64748B',
-};
-const VARIANT_ICON_BG = {
-  primary: 'rgba(37,99,235,0.1)',
-  danger:  'rgba(239,68,68,0.1)',
-  warning: 'rgba(245,158,11,0.1)',
-  success: 'rgba(16,185,129,0.1)',
-  neutral: 'rgba(100,116,139,0.1)',
-};
-const VARIANT_ICON_COLOR = {
-  primary: 'var(--accent)',
-  danger:  '#EF4444',
-  warning: '#F59E0B',
-  success: '#10B981',
-  neutral: '#64748B',
+  neutral: '#94A3B8',
 };
 
-export default function KPICard({ title, value, subtitle, icon: Icon, variant = 'primary', suffix = '', prefix = '', trend, loading }) {
+function fmt(val, suffix) {
+  if (typeof val !== 'number') return val;
+  if (val >= 1000) return (val / 1000).toFixed(val % 1000 === 0 ? 0 : 1) + 'K';
+  return val % 1 !== 0 ? val.toFixed(1) : val.toLocaleString();
+}
+
+export default function KPICard({
+  title,
+  value,
+  suffix = '',
+  prefix = '',
+  target,           // optional: comparison value (number or string)
+  targetLabel = 'current target',
+  trend,            // optional: change value (number)
+  trendPeriod,      // optional: "Apr. 2022"
+  trendGoodWhenDown = false, // true for "lower is better" KPIs (incidents, breaches)
+  subtitle,         // shown as small note below value when no target
+  dataStatus,       // "Data Status: Jun '25" footer line
+  variant = 'primary',
+  loading,
+}) {
   const animated = useCountUp(typeof value === 'number' ? value : 0);
-  const borderColor = VARIANT_BORDER[variant] || VARIANT_BORDER.primary;
-  const iconBg = VARIANT_ICON_BG[variant] || VARIANT_ICON_BG.primary;
-  const iconColor = VARIANT_ICON_COLOR[variant] || VARIANT_ICON_COLOR.primary;
+  const displayVal = typeof value === 'number'
+    ? (value % 1 !== 0 ? animated.toFixed(1) : Math.round(animated).toLocaleString())
+    : value;
 
-  const displayValue = typeof value === 'number' ? animated : value;
+  const statusColor = STATUS_COLOR[variant] || STATUS_COLOR.primary;
+
+  const trendNum = typeof trend === 'number' ? Math.abs(trend) : null;
+  const trendUp = typeof trend === 'number' ? trend >= 0 : null;
+  const trendGood = trendUp !== null
+    ? (trendGoodWhenDown ? !trendUp : trendUp)
+    : null;
+  const trendColor = trendGood === null ? '#94A3B8' : trendGood ? '#10B981' : '#EF4444';
 
   if (loading) {
     return (
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderLeftWidth: 4, borderLeftColor: 'var(--border)', borderRadius: 14 }} className="p-5">
-        <div className="shimmer h-4 w-24 rounded mb-3" />
+      <div style={{ background: 'var(--surface-2, #1e2535)', border: '1px solid var(--border)', borderRadius: 12, padding: '1rem' }}>
+        <div className="shimmer h-4 w-28 rounded mb-3" />
         <div className="shimmer h-8 w-16 rounded mb-2" />
-        <div className="shimmer h-3 w-32 rounded" />
+        <div className="shimmer h-3 w-24 rounded" />
       </div>
     );
   }
 
   return (
     <motion.div
-      whileHover={{ y: -3, boxShadow: `0 12px 32px rgba(0,0,0,0.15), 0 0 0 1px ${borderColor}22` }}
-      transition={{ duration: 0.2 }}
+      whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}
+      transition={{ duration: 0.18 }}
       style={{
-        background: 'var(--surface)',
-        border: `1px solid var(--border)`,
-        borderLeft: `4px solid ${borderColor}`,
-        borderRadius: 14,
-        padding: '1.25rem',
+        background: 'var(--surface-2, #1e2535)',
+        border: '1px solid var(--border)',
+        borderRadius: 12,
+        padding: '1rem 1.25rem 0.75rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 0,
       }}
-      className="flex items-start justify-between gap-3"
     >
-      <div className="flex-1 min-w-0">
-        <p style={{ color: 'var(--text-4)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{title}</p>
-        <p style={{ color: 'var(--text-1)', fontSize: 22, fontWeight: 700, lineHeight: 1, marginBottom: 4 }}>
-          {prefix}{typeof value === 'number' ? (
-            value % 1 !== 0 ? displayValue.toFixed(1) : Math.round(displayValue).toLocaleString()
-          ) : value}{suffix}
-        </p>
-        {subtitle && <p style={{ color: 'var(--text-4)', fontSize: 11, marginTop: 3 }}>{subtitle}</p>}
+      {/* Title */}
+      <p style={{ color: 'var(--text-1)', fontSize: 13, fontWeight: 700, marginBottom: '0.75rem', lineHeight: 1.3 }}>
+        {title}
+      </p>
+
+      {/* STATUS + TREND row */}
+      <div style={{ display: 'flex', gap: '1.5rem', flex: 1 }}>
+
+        {/* STATUS */}
+        <div style={{ flex: '1 1 0' }}>
+          <p style={{ color: 'var(--text-4)', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>STATUS</p>
+          <p style={{ color: statusColor, fontSize: 28, fontWeight: 800, lineHeight: 1, marginBottom: 0 }}>
+            {prefix}{fmt(typeof value === 'number' ? (value % 1 !== 0 ? animated : Math.round(animated)) : value, suffix)}{suffix}
+          </p>
+          {target !== undefined ? (
+            <div style={{ marginTop: 6 }}>
+              <p style={{ color: 'var(--text-4)', fontSize: 11, marginBottom: 1 }}>vs</p>
+              <p style={{ color: 'var(--text-2)', fontSize: 13, fontWeight: 600, lineHeight: 1 }}>
+                {prefix}{typeof target === 'number' ? target.toLocaleString() : target}{suffix}
+              </p>
+              <p style={{ color: 'var(--text-4)', fontSize: 10, marginTop: 1 }}>{targetLabel}</p>
+            </div>
+          ) : subtitle ? (
+            <p style={{ color: 'var(--text-4)', fontSize: 11, marginTop: 5, lineHeight: 1.3 }}>{subtitle}</p>
+          ) : null}
+        </div>
+
+        {/* TREND — only if provided */}
         {trend !== undefined && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, fontSize: 11, fontWeight: 600, color: trend >= 0 ? '#EF4444' : '#10B981' }}>
-            <span>{trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%</span>
-            <span style={{ color: 'var(--text-4)', fontWeight: 400 }}>vs last month</span>
+          <div style={{ flex: '1 1 0' }}>
+            <p style={{ color: 'var(--text-4)', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>TREND</p>
+            <p style={{ color: trendColor, fontSize: 20, fontWeight: 800, lineHeight: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
+              <span style={{ fontSize: 16 }}>{trendUp ? '↑' : '↓'}</span>
+              <span>{trendNum % 1 !== 0 ? trendNum.toFixed(1) : trendNum}</span>
+            </p>
+            {trendPeriod && (
+              <div style={{ marginTop: 6 }}>
+                <p style={{ color: 'var(--text-4)', fontSize: 11, marginBottom: 1 }}>vs</p>
+                <p style={{ color: 'var(--text-2)', fontSize: 12, fontWeight: 500, lineHeight: 1.2 }}>{trendPeriod}</p>
+              </div>
+            )}
           </div>
         )}
       </div>
-      {Icon && (
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Icon size={20} style={{ color: iconColor }} />
+
+      {/* Footer */}
+      {dataStatus && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
+          <p style={{ color: 'var(--text-4)', fontSize: 10 }}>{dataStatus}</p>
+          <ClipboardList size={13} style={{ color: 'var(--text-4)', opacity: 0.6 }} />
         </div>
       )}
     </motion.div>
