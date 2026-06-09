@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ClipboardList } from 'lucide-react';
 
 function useCountUp(target, duration = 1000) {
   const [value, setValue] = useState(0);
@@ -31,7 +30,7 @@ const STATUS_COLOR = {
   neutral: '#94A3B8',
 };
 
-function fmt(val, suffix) {
+function fmt(val) {
   if (typeof val !== 'number') return val;
   if (val >= 1000) return (val / 1000).toFixed(val % 1000 === 0 ? 0 : 1) + 'K';
   return val % 1 !== 0 ? val.toFixed(1) : val.toLocaleString();
@@ -42,33 +41,28 @@ export default function KPICard({
   value,
   suffix = '',
   prefix = '',
-  target,           // optional: comparison value (number or string)
+  target,
   targetLabel = 'current target',
-  trend,            // optional: change value (number)
-  trendPeriod,      // optional: "Apr. 2022"
-  trendGoodWhenDown = false, // true for "lower is better" KPIs (incidents, breaches)
-  subtitle,         // shown as small note below value when no target
-  dataStatus,       // "Data Status: Jun '25" footer line
+  trend,
+  trendPeriod,
+  trendGoodWhenDown = false,
+  subtitle,
+  dataStatus,
   variant = 'primary',
+  icon: Icon,
   loading,
 }) {
   const animated = useCountUp(typeof value === 'number' ? value : 0);
-  const displayVal = typeof value === 'number'
-    ? (value % 1 !== 0 ? animated.toFixed(1) : Math.round(animated).toLocaleString())
-    : value;
-
   const statusColor = STATUS_COLOR[variant] || STATUS_COLOR.primary;
 
   const trendNum = typeof trend === 'number' ? Math.abs(trend) : null;
   const trendUp = typeof trend === 'number' ? trend >= 0 : null;
-  const trendGood = trendUp !== null
-    ? (trendGoodWhenDown ? !trendUp : trendUp)
-    : null;
+  const trendGood = trendUp !== null ? (trendGoodWhenDown ? !trendUp : trendUp) : null;
   const trendColor = trendGood === null ? '#94A3B8' : trendGood ? '#10B981' : '#EF4444';
 
   if (loading) {
     return (
-      <div style={{ background: 'var(--surface-2, #1e2535)', border: '1px solid var(--border)', borderRadius: 12, padding: '1rem' }}>
+      <div style={{ background: 'var(--surface-2, #1e2535)', border: '1px solid var(--border)', borderRadius: 14, padding: '1rem 1.25rem', minHeight: 130 }}>
         <div className="shimmer h-4 w-28 rounded mb-3" />
         <div className="shimmer h-8 w-16 rounded mb-2" />
         <div className="shimmer h-3 w-24 rounded" />
@@ -78,57 +72,78 @@ export default function KPICard({
 
   return (
     <motion.div
-      whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}
-      transition={{ duration: 0.18 }}
+      whileHover={{ y: -2, boxShadow: '0 8px 28px rgba(0,0,0,0.22)' }}
+      transition={{ duration: 0.16 }}
       style={{
         background: 'var(--surface-2, #1e2535)',
         border: '1px solid var(--border)',
-        borderRadius: 12,
-        padding: '1rem 1.25rem 0.75rem',
+        borderRadius: 14,
+        padding: '1rem 1.25rem 0.9rem',
         display: 'flex',
         flexDirection: 'column',
-        gap: 0,
+        minHeight: 130,
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      {/* Title */}
-      <p style={{ color: 'var(--text-1)', fontSize: 13, fontWeight: 700, marginBottom: '0.75rem', lineHeight: 1.3 }}>
-        {title}
-      </p>
+      {/* Subtle top-left accent line */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+        background: `linear-gradient(90deg, ${statusColor}90, transparent)`,
+        borderRadius: '14px 14px 0 0',
+      }} />
+
+      {/* Title row with optional icon badge */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+        <p style={{ color: 'var(--text-2)', fontSize: 12, fontWeight: 600, lineHeight: 1.3, flex: 1, paddingRight: Icon ? 8 : 0 }}>
+          {title}
+        </p>
+        {Icon && (
+          <div style={{
+            width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+            background: `linear-gradient(135deg, ${statusColor}28 0%, ${statusColor}14 100%)`,
+            border: `1px solid ${statusColor}30`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Icon size={15} style={{ color: statusColor }} strokeWidth={1.8} />
+          </div>
+        )}
+      </div>
 
       {/* STATUS + TREND row */}
-      <div style={{ display: 'flex', gap: '1.5rem', flex: 1 }}>
+      <div style={{ display: 'flex', gap: '1.25rem', flex: 1, alignItems: 'flex-start' }}>
 
         {/* STATUS */}
-        <div style={{ flex: '1 1 0' }}>
-          <p style={{ color: 'var(--text-4)', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>STATUS</p>
-          <p style={{ color: statusColor, fontSize: 28, fontWeight: 800, lineHeight: 1, marginBottom: 0 }}>
-            {prefix}{fmt(typeof value === 'number' ? (value % 1 !== 0 ? animated : Math.round(animated)) : value, suffix)}{suffix}
+        <div style={{ flex: '1 1 0', minWidth: 0 }}>
+          <p style={{ color: 'var(--text-4)', fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 3 }}>STATUS</p>
+          <p style={{ color: statusColor, fontSize: 26, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.5px' }}>
+            {prefix}{fmt(typeof value === 'number' ? (value % 1 !== 0 ? animated : Math.round(animated)) : value)}{suffix}
           </p>
           {target !== undefined ? (
-            <div style={{ marginTop: 6 }}>
-              <p style={{ color: 'var(--text-4)', fontSize: 11, marginBottom: 1 }}>vs</p>
-              <p style={{ color: 'var(--text-2)', fontSize: 13, fontWeight: 600, lineHeight: 1 }}>
+            <div style={{ marginTop: 5 }}>
+              <p style={{ color: 'var(--text-4)', fontSize: 10, marginBottom: 1 }}>vs</p>
+              <p style={{ color: 'var(--text-2)', fontSize: 12, fontWeight: 600, lineHeight: 1 }}>
                 {prefix}{typeof target === 'number' ? target.toLocaleString() : target}{suffix}
               </p>
               <p style={{ color: 'var(--text-4)', fontSize: 10, marginTop: 1 }}>{targetLabel}</p>
             </div>
           ) : subtitle ? (
-            <p style={{ color: 'var(--text-4)', fontSize: 11, marginTop: 5, lineHeight: 1.3 }}>{subtitle}</p>
+            <p style={{ color: 'var(--text-4)', fontSize: 11, marginTop: 4, lineHeight: 1.3 }}>{subtitle}</p>
           ) : null}
         </div>
 
-        {/* TREND — only if provided */}
+        {/* TREND */}
         {trend !== undefined && (
-          <div style={{ flex: '1 1 0' }}>
-            <p style={{ color: 'var(--text-4)', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>TREND</p>
+          <div style={{ flex: '1 1 0', minWidth: 0 }}>
+            <p style={{ color: 'var(--text-4)', fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 3 }}>TREND</p>
             <p style={{ color: trendColor, fontSize: 20, fontWeight: 800, lineHeight: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
-              <span style={{ fontSize: 16 }}>{trendUp ? '↑' : '↓'}</span>
+              <span style={{ fontSize: 15 }}>{trendUp ? '↑' : '↓'}</span>
               <span>{trendNum % 1 !== 0 ? trendNum.toFixed(1) : trendNum}</span>
             </p>
             {trendPeriod && (
-              <div style={{ marginTop: 6 }}>
-                <p style={{ color: 'var(--text-4)', fontSize: 11, marginBottom: 1 }}>vs</p>
-                <p style={{ color: 'var(--text-2)', fontSize: 12, fontWeight: 500, lineHeight: 1.2 }}>{trendPeriod}</p>
+              <div style={{ marginTop: 5 }}>
+                <p style={{ color: 'var(--text-4)', fontSize: 10, marginBottom: 1 }}>vs</p>
+                <p style={{ color: 'var(--text-2)', fontSize: 11, fontWeight: 500, lineHeight: 1.2 }}>{trendPeriod}</p>
               </div>
             )}
           </div>
@@ -137,9 +152,8 @@ export default function KPICard({
 
       {/* Footer */}
       {dataStatus && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, paddingTop: 7, borderTop: '1px solid var(--border)' }}>
           <p style={{ color: 'var(--text-4)', fontSize: 10 }}>{dataStatus}</p>
-          <ClipboardList size={13} style={{ color: 'var(--text-4)', opacity: 0.6 }} />
         </div>
       )}
     </motion.div>

@@ -128,10 +128,10 @@ export default function ATMNetwork() {
       <FilterBar filters={FILTER_DEFS} values={filters} onChange={(k, v) => setFilters(f => ({ ...f, [k]: v }))} onReset={handleReset} onApply={handleApply} />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KPICard title="Total ATMs" value={filtered.length} subtitle="In filtered view" variant="primary" />
-        <KPICard title="ATMs Online" value={filtered.filter(a => a.connectivity === 'Online').length} target={filtered.length} targetLabel="total ATMs" variant="success" />
-        <KPICard title="ATMs Offline" value={offlineATMs.length} target={0} targetLabel="target" trendGoodWhenDown variant="danger" />
-        <KPICard title="Total Incidents" value={filtered.reduce((s, a) => s + a.incidents, 0)} target={0} targetLabel="target" trendGoodWhenDown variant="danger" />
+        <KPICard title="Total ATMs" value={filtered.length} subtitle="In filtered view" icon={Cpu} variant="primary" />
+        <KPICard title="ATMs Online" value={filtered.filter(a => a.connectivity === 'Online').length} target={filtered.length} targetLabel="total ATMs" icon={Cpu} variant="success" />
+        <KPICard title="ATMs Offline" value={offlineATMs.length} target={0} targetLabel="target" trendGoodWhenDown icon={WifiOff} variant="danger" />
+        <KPICard title="Total Incidents" value={filtered.reduce((s, a) => s + a.incidents, 0)} target={0} targetLabel="target" trendGoodWhenDown icon={AlertTriangle} variant="danger" />
       </div>
 
       {offlineATMs.length > 0 && (

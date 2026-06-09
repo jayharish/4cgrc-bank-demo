@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { dbQuery, dbInsert, dbUpdate } from '../lib/dataApi';
 import { useAuth } from '../context/AuthContext';
+import KPICard from '../components/KPICard';
 
 const WEIGHT_META = {
   W5: { label: 'Critical', color: '#EF4444', bg: 'rgba(239,68,68,0.12)', score: 5 },
@@ -662,18 +663,13 @@ export default function InspectionEngine() {
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Active Templates', value: templates.length, color: '#2563EB', icon: ClipboardList },
-          { label: 'Inspections Run', value: submissions.length, color: '#7C3AED', icon: CheckCircle2 },
-          { label: 'Avg. Score', value: submissions.length > 0 ? Math.round(submissions.reduce((s, sub) => s + (sub.score || 0), 0) / submissions.length) + '%' : 'N/A', color: '#10B981', icon: Award },
-          { label: 'Tickets Auto-Created', value: submissions.reduce((s, sub) => s + (sub.tickets_created || 0), 0), color: '#EF4444', icon: AlertTriangle },
+          { title: 'Active Templates', value: templates.length, icon: ClipboardList, variant: 'primary', subtitle: 'Ready to run' },
+          { title: 'Inspections Run', value: submissions.length, icon: CheckCircle2, variant: 'success', subtitle: 'Total submissions' },
+          { title: 'Avg. Score', value: submissions.length > 0 ? Math.round(submissions.reduce((s, sub) => s + (sub.score || 0), 0) / submissions.length) : 0, suffix: '%', icon: Award, variant: 'success', target: 85, targetLabel: 'passing score' },
+          { title: 'Tickets Auto-Created', value: submissions.reduce((s, sub) => s + (sub.tickets_created || 0), 0), icon: AlertTriangle, variant: 'danger', target: 0, targetLabel: 'target' },
         ].map((kpi, i) => (
-          <motion.div key={kpi.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
-            className="rounded-2xl p-5" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold" style={{ color: 'var(--text-4)' }}>{kpi.label}</p>
-              <kpi.icon size={16} style={{ color: kpi.color }} />
-            </div>
-            <p className="text-2xl font-black" style={{ color: 'var(--text-1)' }}>{loading ? '—' : kpi.value}</p>
+          <motion.div key={kpi.title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
+            <KPICard {...kpi} loading={loading} />
           </motion.div>
         ))}
       </div>

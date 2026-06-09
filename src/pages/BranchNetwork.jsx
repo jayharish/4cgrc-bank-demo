@@ -137,10 +137,10 @@ export default function BranchNetwork() {
       {/* KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { title: 'Avg. Branch Score', value: avgScore, suffix: '%', target: 85, targetLabel: 'compliance target', variant: 'primary' },
-          { title: 'Unique Locations', value: filteredBranches.length, subtitle: 'Branches in filtered view', variant: 'neutral' },
-          { title: 'Incidents Reported', value: totalIncidents, target: 0, targetLabel: 'target', trendGoodWhenDown: true, variant: 'danger' },
-          { title: 'Overdue Tickets', value: totalOverdue, target: 0, targetLabel: 'target', trendGoodWhenDown: true, variant: 'danger' },
+          { title: 'Avg. Branch Score', value: avgScore, suffix: '%', target: 85, targetLabel: 'compliance target', icon: TrendingUp, variant: 'primary' },
+          { title: 'Unique Locations', value: filteredBranches.length, subtitle: 'Branches in filtered view', icon: Building2, variant: 'neutral' },
+          { title: 'Incidents Reported', value: totalIncidents, target: 0, targetLabel: 'target', trendGoodWhenDown: true, icon: AlertTriangle, variant: 'danger' },
+          { title: 'Overdue Tickets', value: totalOverdue, target: 0, targetLabel: 'target', trendGoodWhenDown: true, icon: Clock, variant: 'danger' },
         ].map((card, i) => (
           <motion.div key={card.title} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.07, duration: 0.35 }}>
             <KPICard {...card} />

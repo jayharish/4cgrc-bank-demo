@@ -206,10 +206,10 @@ export default function BranchIncidents({ type }) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { title: 'Total Incidents', value: stats.total, subtitle: 'In database', variant: 'danger' },
-          { title: 'Overdue', value: stats.overdue, target: 0, targetLabel: 'target', trendGoodWhenDown: true, variant: 'warning' },
-          { title: 'Resolved', value: stats.resolved, target: stats.total, targetLabel: 'total', variant: 'success' },
-          { title: 'Critical', value: stats.critical, target: 0, targetLabel: 'target', trendGoodWhenDown: true, variant: 'danger' },
+          { title: 'Total Incidents', value: stats.total, subtitle: 'In database', icon: AlertTriangle, variant: 'danger' },
+          { title: 'Overdue', value: stats.overdue, target: 0, targetLabel: 'target', trendGoodWhenDown: true, icon: Clock, variant: 'warning' },
+          { title: 'Resolved', value: stats.resolved, target: stats.total, targetLabel: 'total', icon: CheckCircle2, variant: 'success' },
+          { title: 'Critical', value: stats.critical, target: 0, targetLabel: 'target', trendGoodWhenDown: true, icon: AlertTriangle, variant: 'danger' },
         ].map((card, i) => (
           <motion.div key={card.title} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.07 }}>
             <KPICard {...card} />
